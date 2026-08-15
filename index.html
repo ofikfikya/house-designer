@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>House Designer — Editor Denah 2D</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="app">
+
+  <header class="app-header">
+    <div class="app-brand">
+      <svg class="brand-mark" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M3 11.5 12 4l9 7.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M5.5 10v9a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-9" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M10 20v-5.5h4V20" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="app-brand-text">
+        <span class="app-title">House Designer</span>
+        <span class="app-subtitle">Phase 1 — Editor Dinding 2D</span>
+      </div>
+    </div>
+
+    <div class="app-actions">
+      <button id="action-new" class="topbar-btn" type="button">New</button>
+      <button class="topbar-btn" type="button" disabled title="Belum tersedia — direncanakan di Phase 9">Open</button>
+      <button class="topbar-btn" type="button" disabled title="Belum tersedia — direncanakan di Phase 9">Save</button>
+      <span class="topbar-divider"></span>
+      <button class="topbar-btn" type="button" disabled title="Belum tersedia — direncanakan di Phase 10">↶ Undo</button>
+      <button class="topbar-btn" type="button" disabled title="Belum tersedia — direncanakan di Phase 10">↷ Redo</button>
+      <span class="topbar-divider"></span>
+      <button class="topbar-btn topbar-btn-active" type="button" aria-pressed="true">2D</button>
+      <button class="topbar-btn" type="button" disabled title="Belum tersedia — direncanakan di Phase 4">3D</button>
+      <button id="action-reset-view" class="topbar-btn" type="button" title="Kembalikan tampilan ke posisi awal">Reset View</button>
+    </div>
+  </header>
+
+  <div class="app-body">
+    <aside id="toolbar" class="toolbar" aria-label="Alat gambar"></aside>
+
+    <main class="workspace">
+      <canvas id="workspace-canvas"></canvas>
+
+      <div id="empty-hint" class="empty-hint">
+        <span class="empty-hint-eyebrow">Mulai dari sini</span>
+        <p>Pilih alat <strong>Wall</strong>, lalu klik dua titik pada kanvas untuk menggambar dinding pertama.</p>
+      </div>
+
+      <div class="zoom-controls">
+        <button id="zoom-in" class="zoom-btn" type="button" aria-label="Perbesar">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <button id="zoom-out" class="zoom-btn" type="button" aria-label="Perkecil">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+      </div>
+
+      <button id="mobile-panel-toggle" class="mobile-panel-toggle" type="button" aria-label="Buka panel properti">
+        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+        <span>Properti</span>
+      </button>
+    </main>
+
+    <aside id="properties-panel" class="properties-panel" aria-label="Panel properti"></aside>
+  </div>
+
+  <footer class="status-bar">
+    <span class="status-item"><span class="status-key">Floor</span><span id="status-floor">Lantai 1</span></span>
+    <span class="status-sep"></span>
+    <span class="status-item"><span class="status-key">Cursor</span><span id="status-cursor">—</span></span>
+    <span class="status-sep"></span>
+    <span class="status-item"><span class="status-key">Wall</span><span id="status-length">—</span></span>
+    <span class="status-sep"></span>
+    <span class="status-item"><span class="status-key">Zoom</span><span id="status-zoom">100%</span></span>
+  </footer>
+
+</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
