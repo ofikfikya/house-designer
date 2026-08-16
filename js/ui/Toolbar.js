@@ -11,16 +11,16 @@ import { TOOLS } from '../constants.js';
 const TOOL_DEFINITIONS = [
   { tool: TOOLS.SELECT, label: 'Select', shortcut: 'V', icon: iconSelect() },
   { tool: TOOLS.WALL, label: 'Wall', shortcut: 'W', icon: iconWall() },
+  { tool: TOOLS.ROOM, label: 'Room', shortcut: 'R', icon: iconRoom() },
 ];
 
 const COMING_SOON_TOOLS = [
-  { label: 'Room', phase: 2, icon: iconRoom() },
   { label: 'Door', phase: 3, icon: iconDoor() },
   { label: 'Window', phase: 3, icon: iconWindow() },
   { label: 'Furniture', phase: 6, icon: iconFurniture() },
-  { label: 'Dimension', phase: 2, icon: iconDimension() },
-  { label: 'Measure', phase: 2, icon: iconMeasure() },
-  { label: 'Eraser', phase: 2, icon: iconEraser() },
+  { label: 'Dimension', phase: 11, icon: iconDimension() },
+  { label: 'Measure', phase: 11, icon: iconMeasure() },
+  { label: 'Eraser', phase: 11, icon: iconEraser() },
 ];
 
 export class Toolbar {
