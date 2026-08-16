@@ -134,7 +134,11 @@ export class Selection {
 
   onPointerUp() {
     this.lastSnap = null;
+    const wasRealDrag = Boolean(this.dragState && this.dragState.moved);
     this.dragState = null;
+    if (wasRealDrag) {
+      houseState.normalizeJunctions();
+    }
   }
 
   deleteSelected() {
