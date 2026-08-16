@@ -61,6 +61,7 @@ export class WallEditor {
     };
     houseState.addWall(wall);
     houseState.setSelection('wall', wall.id);
+    houseState.normalizeJunctions();
 
     // Continue the chain from this wall's endpoint.
     this.anchor = wall.end;
