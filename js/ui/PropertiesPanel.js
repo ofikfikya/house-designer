@@ -24,18 +24,22 @@ export class PropertiesPanel {
 
   render() {
     const wall = houseState.getSelectedWall();
+    const room = houseState.getSelectedRoom();
     this.root.innerHTML = '';
 
-    if (!wall) {
+    if (wall) {
+      this.root.classList.add('panel-has-content');
+      document.body.classList.add('mobile-panel-open');
+      this._renderWall(wall);
+    } else if (room) {
+      this.root.classList.add('panel-has-content');
+      document.body.classList.add('mobile-panel-open');
+      this._renderRoom(room);
+    } else {
       this.root.classList.remove('panel-has-content');
       document.body.classList.remove('mobile-panel-open');
       this.root.appendChild(this._emptyState());
-      return;
     }
-
-    this.root.classList.add('panel-has-content');
-    document.body.classList.add('mobile-panel-open');
-    this._renderWall(wall);
   }
 
   _renderWall(wall) {
@@ -103,6 +107,50 @@ export class PropertiesPanel {
     this.root.appendChild(footer);
   }
 
+  _renderRoom(room) {
+    const header = document.createElement('div');
+    header.className = 'panel-header';
+    header.innerHTML = `
+      <button class="panel-close" type="button" aria-label="Tutup panel">&times;</button>
+      <span class="panel-eyebrow">Ruangan terpilih</span>
+      <h2>Properti</h2>
+    `;
+    header.querySelector('.panel-close').addEventListener('click', () => {
+      document.body.classList.remove('mobile-panel-open');
+    });
+    this.root.appendChild(header);
+
+    const form = document.createElement('div');
+    form.className = 'panel-form';
+
+    form.appendChild(
+      this._textField({
+        label: 'Nama Ruangan',
+        value: room.name,
+        onCommit: (value) => houseState.renameRoom(room.id, value),
+      })
+    );
+
+    const areaField = document.createElement('div');
+    areaField.className = 'field';
+    areaField.innerHTML = `
+      <span class="field-label">Luas</span>
+      <div class="field-readonly">${room.area.toFixed(2)} m\u00b2</div>
+    `;
+    form.appendChild(areaField);
+
+    this.root.appendChild(form);
+
+    const footer = document.createElement('div');
+    footer.className = 'panel-footer';
+    const hint = document.createElement('p');
+    hint.className = 'panel-empty-hint';
+    hint.textContent =
+      'Ruangan terdeteksi otomatis dari dinding yang membentuk area tertutup. Untuk mengubah bentuk atau luasnya, edit dinding di sekelilingnya lewat alat Wall atau Select.';
+    footer.appendChild(hint);
+    this.root.appendChild(footer);
+  }
+
   _applyLength(wallId, newLength) {
     const wall = houseState.getWallById(wallId);
     if (!wall) return;
@@ -117,6 +165,7 @@ export class PropertiesPanel {
         y: round2(wall.start.y + uy * newLength),
       },
     });
+    houseState.normalizeJunctions();
   }
 
   _emptyState() {
@@ -125,9 +174,43 @@ export class PropertiesPanel {
     div.innerHTML = `
       <span class="panel-eyebrow">Properti</span>
       <p class="panel-empty-title">Belum ada yang dipilih.</p>
-      <p class="panel-empty-hint">Klik salah satu dinding pada denah untuk mengatur panjang, ketebalan, dan tingginya.</p>
+      <p class="panel-empty-hint">Klik dinding (alat Select) untuk mengatur panjang/ketebalan/tinggi, atau klik di dalam ruangan (alat Room) untuk mengganti namanya.</p>
     `;
     return div;
+  }
+
+  _textField({ label, value, onCommit }) {
+    const wrapper = document.createElement('label');
+    wrapper.className = 'field';
+
+    const labelRow = document.createElement('span');
+    labelRow.className = 'field-label';
+    labelRow.textContent = label;
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'field-input field-input-text';
+    input.value = value;
+    input.maxLength = 40;
+
+    const commit = () => {
+      const trimmed = input.value.trim();
+      if (trimmed.length === 0) {
+        input.value = value; // reject a blank name, revert to the previous one
+        return;
+      }
+      input.value = trimmed;
+      onCommit(trimmed);
+    };
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') input.blur();
+    });
+    input.addEventListener('blur', commit);
+
+    wrapper.appendChild(labelRow);
+    wrapper.appendChild(input);
+    return wrapper;
   }
 
   _numberField({ label, value, min, max, step, onCommit }) {
