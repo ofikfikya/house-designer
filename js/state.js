@@ -12,6 +12,7 @@
 // settings, floors, walls, rooms, doors, windows, furniture, materials }.
 
 import { PIXELS_PER_METER, GRID_SIZE_M } from './constants.js';
+import { detectRooms, reconcileRooms, splitWallsAtJunctions } from './rooms.js';
 
 let idCounter = 0;
 export function generateId(prefix) {
@@ -60,6 +61,7 @@ class HouseState extends EventTarget {
 
   addWall(wall) {
     this.project.walls.push(wall);
+    this._recomputeRooms();
     this.emitChange({ type: 'wall:add', id: wall.id });
     return wall;
   }
@@ -68,6 +70,7 @@ class HouseState extends EventTarget {
     const wall = this.getWallById(id);
     if (!wall) return null;
     Object.assign(wall, patch);
+    this._recomputeRooms();
     this.emitChange({ type: 'wall:update', id });
     return wall;
   }
@@ -76,8 +79,73 @@ class HouseState extends EventTarget {
     const idx = this.project.walls.findIndex((w) => w.id === id);
     if (idx === -1) return false;
     this.project.walls.splice(idx, 1);
+    this._recomputeRooms();
     this.emitChange({ type: 'wall:remove', id });
     return true;
+  }
+
+  /**
+   * Split any wall touched mid-segment by another wall's endpoint (a
+   * T-junction) so room detection sees them as connected. Callers invoke
+   * this at "commit" points only — finishing a wall chain, releasing a
+   * drag — never on every intermediate drag update, so a wall grazing
+   * past another mid-drag doesn't flicker-split before the user is done
+   * moving it.
+   */
+  normalizeJunctions() {
+    const before = this.project.walls;
+    const after = splitWallsAtJunctions(before, generateId);
+    if (after.length === before.length) return false; // nothing to normalize
+
+    this.project.walls = after;
+    if (this.selection.type === 'wall' && !this.getWallById(this.selection.id)) {
+      this.selection = { type: null, id: null };
+    }
+    this._recomputeRooms();
+    this.emitChange({ type: 'walls:normalize' });
+    return true;
+  }
+
+  // ---- Rooms (Phase 2) --------------------------------------------------
+  //
+  // Rooms are derived data — never mutated directly except for their
+  // user-given `name`. Their geometry always comes from _recomputeRooms(),
+  // called from inside the wall mutation methods above.
+
+  getRooms() {
+    return this.project.rooms.filter((r) => r.floorId === this.project.currentFloorId);
+  }
+
+  getRoomById(id) {
+    return this.project.rooms.find((r) => r.id === id) || null;
+  }
+
+  getSelectedRoom() {
+    if (this.selection.type !== 'room') return null;
+    return this.getRoomById(this.selection.id);
+  }
+
+  renameRoom(id, name) {
+    const room = this.getRoomById(id);
+    if (!room) return null;
+    const trimmed = name.trim();
+    if (trimmed.length > 0) room.name = trimmed;
+    this.emitChange({ type: 'room:rename', id });
+    return room;
+  }
+
+  _recomputeRooms() {
+    const currentFloorId = this.project.currentFloorId;
+    const wallsOnFloor = this.project.walls.filter((w) => w.floorId === currentFloorId);
+    const candidates = detectRooms(wallsOnFloor);
+    const existingOnFloor = this.project.rooms.filter((r) => r.floorId === currentFloorId);
+    const existingOtherFloors = this.project.rooms.filter((r) => r.floorId !== currentFloorId);
+    const reconciled = reconcileRooms(existingOnFloor, candidates, currentFloorId, generateId);
+    this.project.rooms = [...existingOtherFloors, ...reconciled];
+
+    if (this.selection.type === 'room' && !this.getRoomById(this.selection.id)) {
+      this.selection = { type: null, id: null };
+    }
   }
 
   // ---- Selection ----------------------------------------------------
