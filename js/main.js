@@ -30,13 +30,15 @@ function wireStatusBar(editor2D) {
   const floorEl = document.getElementById('status-floor');
   const cursorEl = document.getElementById('status-cursor');
   const lengthEl = document.getElementById('status-length');
+  const areaEl = document.getElementById('status-area');
   const zoomEl = document.getElementById('status-zoom');
 
   editor2D.addEventListener('status', (e) => {
-    const { floorName, cursor, length, zoomPercent } = e.detail;
+    const { floorName, cursor, length, area, zoomPercent } = e.detail;
     floorEl.textContent = floorName;
     cursorEl.textContent = cursor;
     lengthEl.textContent = length;
+    areaEl.textContent = area;
     zoomEl.textContent = `${zoomPercent}%`;
   });
 }
