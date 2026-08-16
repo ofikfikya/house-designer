@@ -14,6 +14,7 @@
 import { Viewport, clamp } from './Viewport.js';
 import { WallEditor } from './WallEditor.js';
 import { Selection } from './Selection.js';
+import { RoomEditor } from './RoomEditor.js';
 import { drawGrid } from './Grid.js';
 import { houseState } from '../state.js';
 import { TOOLS, COLORS, ZOOM_SENSITIVITY, MIN_ZOOM, MAX_ZOOM, PIXELS_PER_METER } from '../constants.js';
@@ -26,6 +27,7 @@ export class Editor2D extends EventTarget {
     this.viewport = new Viewport();
     this.wallEditor = new WallEditor(this.viewport);
     this.selection = new Selection(this.viewport);
+    this.roomEditor = new RoomEditor(this.viewport);
 
     this.activeTool = TOOLS.SELECT;
     this.isPanning = false;
@@ -61,6 +63,7 @@ export class Editor2D extends EventTarget {
     this.wallEditor.cancel();
     this.selection.onPointerUp();
     this.selection.hoveredWallId = null;
+    this.roomEditor.hoveredRoomId = null;
     houseState.clearSelection();
     this.activeTool = tool;
     this.canvas.style.cursor = tool === TOOLS.WALL ? 'crosshair' : 'default';
@@ -118,6 +121,7 @@ export class Editor2D extends EventTarget {
     const h = this._cssHeight;
 
     drawGrid(ctx, this.viewport, w, h);
+    this.roomEditor.drawFillsAndLabels(ctx);
     this._drawWalls(ctx);
 
     if (this.activeTool === TOOLS.WALL) {
@@ -165,7 +169,8 @@ export class Editor2D extends EventTarget {
   }
 
   _emitStatus() {
-    const selected = houseState.getSelectedWall();
+    const selectedWall = houseState.getSelectedWall();
+    const selectedRoom = houseState.getSelectedRoom();
     const floor = houseState.project.floors.find((f) => f.id === houseState.project.currentFloorId);
 
     let lengthLabel = '\u2014';
@@ -175,9 +180,17 @@ export class Editor2D extends EventTarget {
         this.wallEditor.previewPoint.y - this.wallEditor.anchor.y
       );
       lengthLabel = `${d.toFixed(2)} m`;
-    } else if (selected) {
-      const d = Math.hypot(selected.end.x - selected.start.x, selected.end.y - selected.start.y);
+    } else if (selectedWall) {
+      const d = Math.hypot(selectedWall.end.x - selectedWall.start.x, selectedWall.end.y - selectedWall.start.y);
       lengthLabel = `${d.toFixed(2)} m`;
+    }
+
+    let areaLabel = '\u2014';
+    if (selectedRoom) {
+      areaLabel = `${selectedRoom.area.toFixed(2)} m\u00b2`;
+    } else if (this.activeTool === TOOLS.ROOM && this.roomEditor.hoveredRoomId) {
+      const hovered = houseState.getRoomById(this.roomEditor.hoveredRoomId);
+      if (hovered) areaLabel = `${hovered.area.toFixed(2)} m\u00b2`;
     }
 
     this.dispatchEvent(
@@ -186,6 +199,7 @@ export class Editor2D extends EventTarget {
           floorName: floor ? floor.name : '\u2014',
           cursor: this.lastMouseWorld ? `${this.lastMouseWorld.x.toFixed(2)}m, ${this.lastMouseWorld.y.toFixed(2)}m` : '\u2014',
           length: lengthLabel,
+          area: areaLabel,
           zoomPercent: Math.round(this.viewport.zoom * 100),
         },
       })
@@ -242,6 +256,10 @@ export class Editor2D extends EventTarget {
       const hit = this.selection.onPointerDown(p);
       if (!hit) this._beginPan(e.clientX, e.clientY);
       this.requestRender();
+    } else if (this.activeTool === TOOLS.ROOM) {
+      const hit = this.roomEditor.onPointerDown(p);
+      if (!hit) this._beginPan(e.clientX, e.clientY);
+      this.requestRender();
     }
   }
 
@@ -272,6 +290,10 @@ export class Editor2D extends EventTarget {
       this.selection.onPointerMove(p);
       this._updateSelectCursor(p);
       this.requestRender();
+    } else if (this.activeTool === TOOLS.ROOM) {
+      this.roomEditor.onPointerMove(p);
+      this.canvas.style.cursor = this.roomEditor.hoveredRoomId ? 'pointer' : 'default';
+      this.requestRender();
     }
   }
 
@@ -291,6 +313,9 @@ export class Editor2D extends EventTarget {
       }
       if (this.activeTool === TOOLS.SELECT) {
         this.selection.onPointerUp();
+        this.requestRender();
+      } else if (this.activeTool === TOOLS.ROOM) {
+        this.roomEditor.onPointerUp();
         this.requestRender();
       }
     }
@@ -396,6 +421,8 @@ export class Editor2D extends EventTarget {
       this.setTool(TOOLS.SELECT);
     } else if (key === 'w') {
       this.setTool(TOOLS.WALL);
+    } else if (key === 'r') {
+      this.setTool(TOOLS.ROOM);
     }
   }
 
