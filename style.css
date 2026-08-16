@@ -433,6 +433,22 @@ button {
   border-color: var(--blueprint);
 }
 
+.field-input-text {
+  font-family: var(--font-ui);
+  font-variant-numeric: normal;
+}
+
+.field-readonly {
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  font-variant-numeric: tabular-nums;
+  padding: 8px 10px;
+  border: 1px solid var(--line-200);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+  color: var(--slate-700);
+}
+
 .field-input-error {
   border-color: var(--danger);
 }
