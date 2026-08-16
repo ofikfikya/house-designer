@@ -33,6 +33,7 @@ export const ENDPOINT_HANDLE_HIT_RADIUS_PX = 11; // clickable radius of a handle
 export const TOOLS = Object.freeze({
   SELECT: 'select',
   WALL: 'wall',
+  ROOM: 'room',
 });
 
 export const COLORS = Object.freeze({
@@ -52,4 +53,11 @@ export const COLORS = Object.freeze({
   dimensionText: '#1c3fb8',
   handleFill: '#ffffff',
   handleStroke: '#1c3fb8',
+
+  roomFill: 'rgba(36, 84, 224, 0.05)',
+  roomFillHover: 'rgba(36, 84, 224, 0.10)',
+  roomFillSelected: 'rgba(36, 84, 224, 0.16)',
+  roomStrokeSelected: '#1c3fb8',
+  roomLabelName: '#1a1f29',
+  roomLabelArea: '#5b6675',
 });
