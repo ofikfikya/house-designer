@@ -34,6 +34,8 @@ export const TOOLS = Object.freeze({
   SELECT: 'select',
   WALL: 'wall',
   ROOM: 'room',
+  DOOR: 'door',
+  WINDOW: 'window',
 });
 
 export const COLORS = Object.freeze({
