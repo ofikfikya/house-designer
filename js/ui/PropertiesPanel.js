@@ -14,6 +14,15 @@ import {
   MAX_WALL_HEIGHT_M,
   MIN_WALL_LENGTH_M,
 } from '../constants.js';
+import { MIN_DOOR_WIDTH_M, MAX_DOOR_WIDTH_M, MIN_DOOR_HEIGHT_M, MAX_DOOR_HEIGHT_M, nextRotation } from '../objects/doors.js';
+import {
+  MIN_WINDOW_WIDTH_M,
+  MAX_WINDOW_WIDTH_M,
+  MIN_WINDOW_HEIGHT_M,
+  MAX_WINDOW_HEIGHT_M,
+  MIN_SILL_HEIGHT_M,
+  MAX_SILL_HEIGHT_M,
+} from '../objects/windows.js';
 
 export class PropertiesPanel {
   constructor(rootEl) {
@@ -25,6 +34,8 @@ export class PropertiesPanel {
   render() {
     const wall = houseState.getSelectedWall();
     const room = houseState.getSelectedRoom();
+    const door = houseState.getSelectedDoor();
+    const win = houseState.getSelectedWindow();
     this.root.innerHTML = '';
 
     if (wall) {
@@ -35,6 +46,14 @@ export class PropertiesPanel {
       this.root.classList.add('panel-has-content');
       document.body.classList.add('mobile-panel-open');
       this._renderRoom(room);
+    } else if (door) {
+      this.root.classList.add('panel-has-content');
+      document.body.classList.add('mobile-panel-open');
+      this._renderDoor(door);
+    } else if (win) {
+      this.root.classList.add('panel-has-content');
+      document.body.classList.add('mobile-panel-open');
+      this._renderWindow(win);
     } else {
       this.root.classList.remove('panel-has-content');
       document.body.classList.remove('mobile-panel-open');
@@ -151,6 +170,144 @@ export class PropertiesPanel {
     this.root.appendChild(footer);
   }
 
+  _renderDoor(door) {
+    const header = document.createElement('div');
+    header.className = 'panel-header';
+    header.innerHTML = `
+      <button class="panel-close" type="button" aria-label="Tutup panel">&times;</button>
+      <span class="panel-eyebrow">Pintu terpilih</span>
+      <h2>Properti</h2>
+    `;
+    header.querySelector('.panel-close').addEventListener('click', () => {
+      document.body.classList.remove('mobile-panel-open');
+    });
+    this.root.appendChild(header);
+
+    const form = document.createElement('div');
+    form.className = 'panel-form';
+
+    form.appendChild(
+      this._numberField({
+        label: 'Lebar',
+        value: door.width,
+        min: MIN_DOOR_WIDTH_M,
+        max: MAX_DOOR_WIDTH_M,
+        step: 0.05,
+        onCommit: (value) => houseState.updateDoor(door.id, { width: value }),
+      })
+    );
+    form.appendChild(
+      this._numberField({
+        label: 'Tinggi',
+        value: door.height,
+        min: MIN_DOOR_HEIGHT_M,
+        max: MAX_DOOR_HEIGHT_M,
+        step: 0.05,
+        onCommit: (value) => houseState.updateDoor(door.id, { height: value }),
+      })
+    );
+    form.appendChild(
+      this._selectField({
+        label: 'Tipe',
+        value: door.swingType,
+        options: [
+          { value: 'swing', label: 'Ayun' },
+          { value: 'sliding', label: 'Geser' },
+        ],
+        onCommit: (value) => houseState.updateDoor(door.id, { swingType: value }),
+      })
+    );
+
+    this.root.appendChild(form);
+
+    const footer = document.createElement('div');
+    footer.className = 'panel-footer panel-footer-stack';
+
+    const flipBtn = document.createElement('button');
+    flipBtn.type = 'button';
+    flipBtn.className = 'btn btn-secondary';
+    flipBtn.textContent = 'Balik Arah Bukaan';
+    flipBtn.addEventListener('click', () => {
+      houseState.updateDoor(door.id, { rotation: nextRotation(door.rotation) });
+    });
+    footer.appendChild(flipBtn);
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.type = 'button';
+    deleteBtn.className = 'btn btn-danger';
+    deleteBtn.textContent = 'Hapus Pintu';
+    deleteBtn.addEventListener('click', () => {
+      houseState.removeDoor(door.id);
+      houseState.clearSelection();
+    });
+    footer.appendChild(deleteBtn);
+
+    this.root.appendChild(footer);
+  }
+
+  _renderWindow(win) {
+    const header = document.createElement('div');
+    header.className = 'panel-header';
+    header.innerHTML = `
+      <button class="panel-close" type="button" aria-label="Tutup panel">&times;</button>
+      <span class="panel-eyebrow">Jendela terpilih</span>
+      <h2>Properti</h2>
+    `;
+    header.querySelector('.panel-close').addEventListener('click', () => {
+      document.body.classList.remove('mobile-panel-open');
+    });
+    this.root.appendChild(header);
+
+    const form = document.createElement('div');
+    form.className = 'panel-form';
+
+    form.appendChild(
+      this._numberField({
+        label: 'Lebar',
+        value: win.width,
+        min: MIN_WINDOW_WIDTH_M,
+        max: MAX_WINDOW_WIDTH_M,
+        step: 0.05,
+        onCommit: (value) => houseState.updateWindow(win.id, { width: value }),
+      })
+    );
+    form.appendChild(
+      this._numberField({
+        label: 'Tinggi',
+        value: win.height,
+        min: MIN_WINDOW_HEIGHT_M,
+        max: MAX_WINDOW_HEIGHT_M,
+        step: 0.05,
+        onCommit: (value) => houseState.updateWindow(win.id, { height: value }),
+      })
+    );
+    form.appendChild(
+      this._numberField({
+        label: 'Tinggi Ambang (Sill)',
+        value: win.sillHeight,
+        min: MIN_SILL_HEIGHT_M,
+        max: MAX_SILL_HEIGHT_M,
+        step: 0.05,
+        onCommit: (value) => houseState.updateWindow(win.id, { sillHeight: value }),
+      })
+    );
+
+    this.root.appendChild(form);
+
+    const footer = document.createElement('div');
+    footer.className = 'panel-footer';
+    const deleteBtn = document.createElement('button');
+    deleteBtn.type = 'button';
+    deleteBtn.className = 'btn btn-danger';
+    deleteBtn.textContent = 'Hapus Jendela';
+    deleteBtn.addEventListener('click', () => {
+      houseState.removeWindow(win.id);
+      houseState.clearSelection();
+    });
+    footer.appendChild(deleteBtn);
+    this.root.appendChild(footer);
+  }
+
   _applyLength(wallId, newLength) {
     const wall = houseState.getWallById(wallId);
     if (!wall) return;
@@ -174,7 +331,7 @@ export class PropertiesPanel {
     div.innerHTML = `
       <span class="panel-eyebrow">Properti</span>
       <p class="panel-empty-title">Belum ada yang dipilih.</p>
-      <p class="panel-empty-hint">Klik dinding (alat Select) untuk mengatur panjang/ketebalan/tinggi, atau klik di dalam ruangan (alat Room) untuk mengganti namanya.</p>
+      <p class="panel-empty-hint">Pilih dinding, ruangan, pintu, atau jendela pada denah untuk melihat dan mengubah propertinya.</p>
     `;
     return div;
   }
@@ -210,6 +367,30 @@ export class PropertiesPanel {
 
     wrapper.appendChild(labelRow);
     wrapper.appendChild(input);
+    return wrapper;
+  }
+
+  _selectField({ label, value, options, onCommit }) {
+    const wrapper = document.createElement('label');
+    wrapper.className = 'field';
+
+    const labelRow = document.createElement('span');
+    labelRow.className = 'field-label';
+    labelRow.textContent = label;
+
+    const select = document.createElement('select');
+    select.className = 'field-input field-select';
+    for (const opt of options) {
+      const optionEl = document.createElement('option');
+      optionEl.value = opt.value;
+      optionEl.textContent = opt.label;
+      if (opt.value === value) optionEl.selected = true;
+      select.appendChild(optionEl);
+    }
+    select.addEventListener('change', () => onCommit(select.value));
+
+    wrapper.appendChild(labelRow);
+    wrapper.appendChild(select);
     return wrapper;
   }
 
