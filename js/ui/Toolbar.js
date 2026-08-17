@@ -12,11 +12,11 @@ const TOOL_DEFINITIONS = [
   { tool: TOOLS.SELECT, label: 'Select', shortcut: 'V', icon: iconSelect() },
   { tool: TOOLS.WALL, label: 'Wall', shortcut: 'W', icon: iconWall() },
   { tool: TOOLS.ROOM, label: 'Room', shortcut: 'R', icon: iconRoom() },
+  { tool: TOOLS.DOOR, label: 'Door', shortcut: 'D', icon: iconDoor() },
+  { tool: TOOLS.WINDOW, label: 'Window', shortcut: 'N', icon: iconWindow() },
 ];
 
 const COMING_SOON_TOOLS = [
-  { label: 'Door', phase: 3, icon: iconDoor() },
-  { label: 'Window', phase: 3, icon: iconWindow() },
   { label: 'Furniture', phase: 6, icon: iconFurniture() },
   { label: 'Dimension', phase: 11, icon: iconDimension() },
   { label: 'Measure', phase: 11, icon: iconMeasure() },
