@@ -15,7 +15,9 @@ import { Viewport, clamp } from './Viewport.js';
 import { WallEditor } from './WallEditor.js';
 import { Selection } from './Selection.js';
 import { RoomEditor } from './RoomEditor.js';
+import { OpeningEditor } from './OpeningEditor.js';
 import { drawGrid } from './Grid.js';
+import { computeWallSolidSegments } from '../openings.js';
 import { houseState } from '../state.js';
 import { TOOLS, COLORS, ZOOM_SENSITIVITY, MIN_ZOOM, MAX_ZOOM, PIXELS_PER_METER } from '../constants.js';
 
@@ -28,6 +30,8 @@ export class Editor2D extends EventTarget {
     this.wallEditor = new WallEditor(this.viewport);
     this.selection = new Selection(this.viewport);
     this.roomEditor = new RoomEditor(this.viewport);
+    this.doorEditor = new OpeningEditor(this.viewport, 'door');
+    this.windowEditor = new OpeningEditor(this.viewport, 'window');
 
     this.activeTool = TOOLS.SELECT;
     this.isPanning = false;
@@ -64,9 +68,15 @@ export class Editor2D extends EventTarget {
     this.selection.onPointerUp();
     this.selection.hoveredWallId = null;
     this.roomEditor.hoveredRoomId = null;
+    this.doorEditor.hoveredId = null;
+    this.doorEditor.dragState = null;
+    this.doorEditor.previewPosition = null;
+    this.windowEditor.hoveredId = null;
+    this.windowEditor.dragState = null;
+    this.windowEditor.previewPosition = null;
     houseState.clearSelection();
     this.activeTool = tool;
-    this.canvas.style.cursor = tool === TOOLS.WALL ? 'crosshair' : 'default';
+    this.canvas.style.cursor = this._idleCursorForTool(tool);
     this.dispatchEvent(new CustomEvent('toolchange', { detail: { tool } }));
     this.requestRender();
   }
@@ -123,11 +133,17 @@ export class Editor2D extends EventTarget {
     drawGrid(ctx, this.viewport, w, h);
     this.roomEditor.drawFillsAndLabels(ctx);
     this._drawWalls(ctx);
+    this.doorEditor.drawSymbols(ctx);
+    this.windowEditor.drawSymbols(ctx);
 
     if (this.activeTool === TOOLS.WALL) {
       this.wallEditor.draw(ctx);
     } else if (this.activeTool === TOOLS.SELECT) {
       this.selection.draw(ctx);
+    } else if (this.activeTool === TOOLS.DOOR) {
+      this.doorEditor.drawPreview(ctx);
+    } else if (this.activeTool === TOOLS.WINDOW) {
+      this.windowEditor.drawPreview(ctx);
     }
 
     this._emitStatus();
@@ -138,20 +154,28 @@ export class Editor2D extends EventTarget {
     const selectedId = houseState.selection.type === 'wall' ? houseState.selection.id : null;
     for (const wall of walls) {
       if (wall.id === selectedId) continue; // drawn last so its highlight sits on top
-      this._drawWall(ctx, wall, false);
+      this._drawWallWithOpenings(ctx, wall, false);
     }
     if (selectedId) {
       const selWall = houseState.getWallById(selectedId);
-      if (selWall) this._drawWall(ctx, selWall, true);
+      if (selWall) this._drawWallWithOpenings(ctx, selWall, true);
     }
   }
 
-  _drawWall(ctx, wall, isSelected) {
-    const a = this.viewport.worldToScreen(wall.start);
-    const b = this.viewport.worldToScreen(wall.end);
+  _drawWallWithOpenings(ctx, wall, isSelected) {
+    const openings = [...houseState.getDoorsOnWall(wall.id), ...houseState.getWindowsOnWall(wall.id)];
+    const segments = computeWallSolidSegments(wall, openings);
+    for (const seg of segments) {
+      this._drawWallSegment(ctx, seg.start, seg.end, wall.thickness, isSelected);
+    }
+  }
+
+  _drawWallSegment(ctx, startWorld, endWorld, thickness, isSelected) {
+    const a = this.viewport.worldToScreen(startWorld);
+    const b = this.viewport.worldToScreen(endWorld);
     const dir = normalize({ x: b.x - a.x, y: b.y - a.y });
     const perp = { x: -dir.y, y: dir.x };
-    const halfT = Math.max((wall.thickness * this.viewport.scale) / 2, 1.5);
+    const halfT = Math.max((thickness * this.viewport.scale) / 2, 1.5);
 
     ctx.save();
     ctx.beginPath();
@@ -260,6 +284,14 @@ export class Editor2D extends EventTarget {
       const hit = this.roomEditor.onPointerDown(p);
       if (!hit) this._beginPan(e.clientX, e.clientY);
       this.requestRender();
+    } else if (this.activeTool === TOOLS.DOOR) {
+      const hit = this.doorEditor.onPointerDown(p);
+      if (!hit) this._beginPan(e.clientX, e.clientY);
+      this.requestRender();
+    } else if (this.activeTool === TOOLS.WINDOW) {
+      const hit = this.windowEditor.onPointerDown(p);
+      if (!hit) this._beginPan(e.clientX, e.clientY);
+      this.requestRender();
     }
   }
 
@@ -294,6 +326,14 @@ export class Editor2D extends EventTarget {
       this.roomEditor.onPointerMove(p);
       this.canvas.style.cursor = this.roomEditor.hoveredRoomId ? 'pointer' : 'default';
       this.requestRender();
+    } else if (this.activeTool === TOOLS.DOOR) {
+      this.doorEditor.onPointerMove(p);
+      this._updateOpeningCursor(this.doorEditor);
+      this.requestRender();
+    } else if (this.activeTool === TOOLS.WINDOW) {
+      this.windowEditor.onPointerMove(p);
+      this._updateOpeningCursor(this.windowEditor);
+      this.requestRender();
     }
   }
 
@@ -308,7 +348,7 @@ export class Editor2D extends EventTarget {
       if (this.isPanning) {
         this.isPanning = false;
         this.panStart = null;
-        this.canvas.style.cursor = this.isSpaceDown ? 'grab' : this.activeTool === TOOLS.WALL ? 'crosshair' : 'default';
+        this.canvas.style.cursor = this.isSpaceDown ? 'grab' : this._idleCursorForTool(this.activeTool);
         return;
       }
       if (this.activeTool === TOOLS.SELECT) {
@@ -317,7 +357,26 @@ export class Editor2D extends EventTarget {
       } else if (this.activeTool === TOOLS.ROOM) {
         this.roomEditor.onPointerUp();
         this.requestRender();
+      } else if (this.activeTool === TOOLS.DOOR) {
+        this.doorEditor.onPointerUp();
+        this.requestRender();
+      } else if (this.activeTool === TOOLS.WINDOW) {
+        this.windowEditor.onPointerUp();
+        this.requestRender();
       }
+    }
+  }
+
+  _updateOpeningCursor(editor) {
+    if (this.isPanning) return;
+    if (editor.dragState) {
+      this.canvas.style.cursor = 'grabbing';
+    } else if (editor.hoveredId) {
+      this.canvas.style.cursor = 'pointer';
+    } else if (editor.previewPosition && editor.previewPosition.valid) {
+      this.canvas.style.cursor = 'copy';
+    } else {
+      this.canvas.style.cursor = 'crosshair';
     }
   }
 
@@ -333,6 +392,10 @@ export class Editor2D extends EventTarget {
     } else {
       this.canvas.style.cursor = 'default';
     }
+  }
+
+  _idleCursorForTool(tool) {
+    return tool === TOOLS.WALL || tool === TOOLS.DOOR || tool === TOOLS.WINDOW ? 'crosshair' : 'default';
   }
 
   _beginPan(clientX, clientY) {
@@ -409,7 +472,12 @@ export class Editor2D extends EventTarget {
     }
 
     if (e.key === 'Delete' || e.key === 'Backspace') {
-      if (this.selection.deleteSelected()) {
+      const type = houseState.selection.type;
+      let handled = false;
+      if (type === 'wall') handled = this.selection.deleteSelected();
+      else if (type === 'door') handled = this.doorEditor.deleteSelected();
+      else if (type === 'window') handled = this.windowEditor.deleteSelected();
+      if (handled) {
         e.preventDefault();
         this.requestRender();
       }
@@ -423,6 +491,10 @@ export class Editor2D extends EventTarget {
       this.setTool(TOOLS.WALL);
     } else if (key === 'r') {
       this.setTool(TOOLS.ROOM);
+    } else if (key === 'd') {
+      this.setTool(TOOLS.DOOR);
+    } else if (key === 'n') {
+      this.setTool(TOOLS.WINDOW);
     }
   }
 
@@ -430,7 +502,7 @@ export class Editor2D extends EventTarget {
     if (e.code === 'Space') {
       this.isSpaceDown = false;
       if (!this.isPanning) {
-        this.canvas.style.cursor = this.activeTool === TOOLS.WALL ? 'crosshair' : 'default';
+        this.canvas.style.cursor = this._idleCursorForTool(this.activeTool);
       }
     }
   }
