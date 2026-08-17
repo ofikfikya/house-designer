@@ -438,6 +438,18 @@ button {
   font-variant-numeric: normal;
 }
 
+.field-select {
+  font-family: var(--font-ui);
+  font-variant-numeric: normal;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23424b59' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 16px;
+  padding-right: 30px;
+}
+
 .field-readonly {
   font-family: var(--font-mono);
   font-size: 13.5px;
@@ -463,6 +475,12 @@ button {
   margin-top: auto;
   padding: 16px 18px;
   border-top: 1px solid var(--line-200);
+}
+
+.panel-footer-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .panel-empty {
@@ -508,6 +526,18 @@ button {
 .btn-danger:hover {
   background: var(--danger);
   color: #fff;
+}
+
+.btn-secondary {
+  background: var(--paper);
+  color: var(--slate-700);
+  border-color: var(--line-300);
+}
+
+.btn-secondary:hover {
+  background: var(--blueprint-wash);
+  color: var(--blueprint-dark);
+  border-color: var(--blueprint-wash);
 }
 
 /* ==========================================================================
