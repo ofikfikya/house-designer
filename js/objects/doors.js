@@ -1,5 +1,8 @@
 // objects/doors.js
 
+import { openingEdgePoints } from '../openings.js';
+import { DOOR_FRAME_TRIM_M, DOOR_LEAF_THICKNESS_M } from '../constants.js';
+
 export const DOOR_DEFAULTS = Object.freeze({ width: 0.9, height: 2.1 });
 export const MIN_DOOR_WIDTH_M = 0.4;
 export const MAX_DOOR_WIDTH_M = 2.4;
@@ -29,6 +32,59 @@ export function createDoor(id, wallId, position) {
 
 export function nextRotation(rotation) {
   return (rotation + 90) % 360;
+}
+
+/**
+ * Plain box parameters (world meters) for a door's 3D representation: a
+ * leaf filling the opening (shown closed, regardless of the 2D swing
+ * `rotation` — see Scene3D module notes) plus a simple frame (two jambs
+ * + a head). Reuses openingEdgePoints so the 3D opening lines up with
+ * the exact same gap the 2D wall segments already cut.
+ */
+export function getDoorMesh3DParams(wall, door) {
+  const { edgeStart, edgeEnd, center } = openingEdgePoints(wall, door);
+  const dx = edgeEnd.x - edgeStart.x;
+  const dy = edgeEnd.y - edgeStart.y; // 2D "y" maps to 3D "z" throughout the app
+  const len = Math.hypot(dx, dy) || 1;
+  const ux = dx / len;
+  const uy = dy / len;
+  const rotationY = -Math.atan2(dy, dx);
+
+  const trim = Math.min(DOOR_FRAME_TRIM_M, door.width / 4);
+  const leaf = {
+    width: Math.max(door.width - trim, 0.2),
+    height: door.height,
+    depth: DOOR_LEAF_THICKNESS_M,
+    position: { x: center.x, y: door.height / 2, z: center.y },
+    rotationY,
+  };
+
+  const jambOffset = door.width / 2 - trim / 2;
+  const frame = [
+    {
+      width: trim,
+      height: door.height,
+      depth: wall.thickness,
+      position: { x: center.x - ux * jambOffset, y: door.height / 2, z: center.y - uy * jambOffset },
+      rotationY,
+    },
+    {
+      width: trim,
+      height: door.height,
+      depth: wall.thickness,
+      position: { x: center.x + ux * jambOffset, y: door.height / 2, z: center.y + uy * jambOffset },
+      rotationY,
+    },
+    {
+      width: door.width,
+      height: trim,
+      depth: wall.thickness,
+      position: { x: center.x, y: door.height + trim / 2, z: center.y },
+      rotationY,
+    },
+  ];
+
+  return { leaf, frame };
 }
 
 /**
