@@ -28,8 +28,19 @@ export class Toolbar {
     this.root = rootEl;
     this.editor2D = editor2D;
     this.buttons = new Map();
+    this.mode = '2d';
     this._render();
     this.editor2D.addEventListener('toolchange', (e) => this._syncActive(e.detail.tool));
+  }
+
+  setMode(mode) {
+    this.mode = mode;
+    const in3D = mode === '3d';
+    for (const btn of this.buttons.values()) {
+      btn.disabled = in3D;
+      btn.classList.toggle('tool-btn-disabled', in3D);
+      btn.title = in3D ? `${btn.dataset.baseTitle} \u2014 alat edit 2D, tidak tersedia di tampilan 3D` : btn.dataset.baseTitle;
+    }
   }
 
   _render() {
@@ -40,6 +51,7 @@ export class Toolbar {
       btn.type = 'button';
       btn.className = 'tool-btn';
       btn.title = `${def.label} (${def.shortcut})`;
+      btn.dataset.baseTitle = btn.title;
       btn.innerHTML = `${def.icon}<span>${def.label}</span>`;
       btn.addEventListener('click', () => this.editor2D.setTool(def.tool));
       this.root.appendChild(btn);
