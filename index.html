@@ -3,8 +3,16 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>House Designer — Editor Denah 2D</title>
+<title>House Designer — Editor Denah 2D + 3D</title>
 <link rel="stylesheet" href="style.css" />
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/"
+  }
+}
+</script>
 </head>
 <body>
 <div class="app">
@@ -18,7 +26,7 @@
       </svg>
       <div class="app-brand-text">
         <span class="app-title">House Designer</span>
-        <span class="app-subtitle">Phase 3 — Pintu &amp; Jendela</span>
+        <span class="app-subtitle">Phase 4 — Render 3D</span>
       </div>
     </div>
 
@@ -30,8 +38,8 @@
       <button class="topbar-btn" type="button" disabled title="Belum tersedia — direncanakan di Phase 10">↶ Undo</button>
       <button class="topbar-btn" type="button" disabled title="Belum tersedia — direncanakan di Phase 10">↷ Redo</button>
       <span class="topbar-divider"></span>
-      <button class="topbar-btn topbar-btn-active" type="button" aria-pressed="true">2D</button>
-      <button class="topbar-btn" type="button" disabled title="Belum tersedia — direncanakan di Phase 4">3D</button>
+      <button id="mode-2d" class="topbar-btn topbar-btn-active" type="button" aria-pressed="true">2D</button>
+      <button id="mode-3d" class="topbar-btn" type="button" aria-pressed="false" title="Perlu koneksi internet untuk memuat Three.js">3D</button>
       <button id="action-reset-view" class="topbar-btn" type="button" title="Kembalikan tampilan ke posisi awal">Reset View</button>
     </div>
   </header>
@@ -41,6 +49,7 @@
 
     <main class="workspace">
       <canvas id="workspace-canvas"></canvas>
+      <canvas id="workspace-canvas-3d"></canvas>
 
       <div id="empty-hint" class="empty-hint">
         <span class="empty-hint-eyebrow">Mulai dari sini</span>
@@ -56,6 +65,19 @@
         </button>
       </div>
 
+      <div id="camera-presets" class="camera-presets">
+        <button class="camera-preset-btn" type="button" data-view="perspective" title="Tampilan perspektif">Persp.</button>
+        <button class="camera-preset-btn" type="button" data-view="top" title="Tampak atas">Top</button>
+        <button class="camera-preset-btn" type="button" data-view="front" title="Tampak depan">Front</button>
+        <button class="camera-preset-btn" type="button" data-view="back" title="Tampak belakang">Back</button>
+        <button class="camera-preset-btn" type="button" data-view="left" title="Tampak kiri">Left</button>
+        <button class="camera-preset-btn" type="button" data-view="right" title="Tampak kanan">Right</button>
+      </div>
+
+      <div id="scene3d-loading" class="scene3d-loading">
+        <span>Memuat Three.js dari CDN…</span>
+      </div>
+
       <button id="mobile-panel-toggle" class="mobile-panel-toggle" type="button" aria-label="Buka panel properti">
         <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
         <span>Properti</span>
@@ -67,14 +89,14 @@
 
   <footer class="status-bar">
     <span class="status-item"><span class="status-key">Floor</span><span id="status-floor">Lantai 1</span></span>
-    <span class="status-sep"></span>
-    <span class="status-item"><span class="status-key">Cursor</span><span id="status-cursor">—</span></span>
-    <span class="status-sep"></span>
-    <span class="status-item"><span class="status-key">Wall</span><span id="status-length">—</span></span>
+    <span class="status-sep status-2d-only"></span>
+    <span class="status-item status-2d-only"><span class="status-key">Cursor</span><span id="status-cursor">—</span></span>
+    <span class="status-sep status-2d-only"></span>
+    <span class="status-item status-2d-only"><span class="status-key">Wall</span><span id="status-length">—</span></span>
     <span class="status-sep"></span>
     <span class="status-item"><span class="status-key">Area</span><span id="status-area">—</span></span>
-    <span class="status-sep"></span>
-    <span class="status-item"><span class="status-key">Zoom</span><span id="status-zoom">100%</span></span>
+    <span class="status-sep status-2d-only"></span>
+    <span class="status-item status-2d-only"><span class="status-key">Zoom</span><span id="status-zoom">100%</span></span>
   </footer>
 
 </div>
