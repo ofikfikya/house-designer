@@ -263,6 +263,88 @@ button {
   touch-action: none;
 }
 
+#workspace-canvas-3d {
+  display: none;
+  width: 100%;
+  height: 100%;
+}
+
+body.mode-3d #workspace-canvas {
+  display: none;
+}
+
+body.mode-3d #workspace-canvas-3d {
+  display: block;
+}
+
+body.mode-3d .empty-hint {
+  display: none !important;
+}
+
+body.mode-3d .zoom-controls {
+  display: none;
+}
+
+body.mode-3d .status-2d-only {
+  display: none;
+}
+
+.camera-presets {
+  display: none;
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  background: var(--surface);
+  border: 1px solid var(--line-200);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: 4px;
+  gap: 2px;
+}
+
+body.mode-3d .camera-presets {
+  display: flex;
+}
+
+.camera-preset-btn {
+  appearance: none;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--slate-700);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 7px 9px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.camera-preset-btn:hover {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.camera-preset-btn.is-active {
+  background: var(--blueprint-wash);
+  color: var(--blueprint-dark);
+}
+
+.scene3d-loading {
+  display: none;
+  position: absolute;
+  inset: 0;
+  align-items: center;
+  justify-content: center;
+  background: var(--paper);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--slate-700);
+}
+
+body.mode-3d.scene3d-is-loading .scene3d-loading {
+  display: flex;
+}
+
 .empty-hint {
   position: absolute;
   top: 28px;
@@ -673,6 +755,12 @@ button {
 
   .zoom-controls {
     bottom: 76px;
+  }
+
+  .camera-presets {
+    bottom: 76px;
+    flex-wrap: wrap;
+    max-width: calc(100% - 32px);
   }
 }
 
