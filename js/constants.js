@@ -63,3 +63,39 @@ export const COLORS = Object.freeze({
   roomLabelName: '#1a1f29',
   roomLabelArea: '#5b6675',
 });
+
+// ---------------------------------------------------------------------
+// Phase 4: 3D scene (Three.js uses numeric hex colors, not CSS strings)
+// ---------------------------------------------------------------------
+
+export const CAMERA_FOV_DEG = 50;
+export const CAMERA_NEAR_M = 0.1;
+export const CAMERA_FAR_M = 500;
+
+export const DOOR_LEAF_THICKNESS_M = 0.045;
+export const DOOR_FRAME_TRIM_M = 0.06;
+export const WINDOW_FRAME_TRIM_M = 0.05;
+export const WINDOW_GLASS_THICKNESS_RATIO = 0.4; // fraction of wall thickness
+
+export const COLORS_3D = Object.freeze({
+  sceneBackground: 0xdbe4f0,
+  ground: 0xd6dce2,
+  hemiSky: 0xcfe0f5,
+  hemiGround: 0x8a8272,
+  sun: 0xfff4e0,
+
+  wall: 0xdadfe4,
+  wallSelected: 0x3b6df0,
+
+  doorLeaf: 0x8a5a2b,
+  doorLeafSelected: 0x3b6df0,
+  doorFrame: 0x5c4326,
+
+  windowGlass: 0x9fc6f0,
+  windowGlassSelected: 0x6f9de8,
+  windowFrame: 0x3b6db0,
+  windowFrameSelected: 0x1c3fb8,
+
+  roomFloor: 0xf1ede3,
+  roomFloorSelected: 0xd8e4ff,
+});
